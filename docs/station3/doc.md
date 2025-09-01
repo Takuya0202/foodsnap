@@ -18,9 +18,13 @@
 - メール認証やOAuth認証などを簡単に使える
 - 高度なDBのセキュリティ
 
+### mapbox(地図API)
+- モダンなデザイン。
+- 料金体制がマッチ(月間リクエストが50000以下なら無料)
+
 ## 画面設計図
 figma 
-
+https://www.figma.com/design/6EykxcbLh6zb7I9fAZMVXd/%E7%84%A1%E9%A1%8C?node-id=2-2&t=ANLkUqDYXZkGkP2M-1
 
 ## 画面遷移図
 
