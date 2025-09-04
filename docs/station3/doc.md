@@ -28,7 +28,8 @@ figma
 https://www.figma.com/design/6EykxcbLh6zb7I9fAZMVXd/%E7%84%A1%E9%A1%8C?node-id=2-2&t=ANLkUqDYXZkGkP2M-1
 
 ## 画面遷移図
-
+miro
+https://miro.com/welcomeonboard/clhJVG9xYWtQVmdZc0dnaGwzODQxeTYyeXZKdGJHYjlnWkZ0OHNxNHFhZ1UwT2hUVFlqdVl5R3RUV3paV2tUbUdoZS81NndxZjk3VGVyMHpHcFFlS1pJMU1lTUMvNE9vT3FVSnA5QzkvZTZpVG5hKy83bVRlV2RvTk9ORVVpMnFzVXVvMm53MW9OWFg5bkJoVXZxdFhRPT0hdjE=?share_link_id=150226919505
 
 ## ユーザーフロー図
 
