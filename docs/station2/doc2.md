@@ -140,14 +140,14 @@
 - コメントは同一ユーザーでも複数投稿できる。
 
 ### ユーザー登録
-![](../image/login-form.svg)
-![](../image/register-mail.svg)
+![](../image/sp-user-login-form.svg)
+![](../image/pc-user-login-form.svg)
 - ユーザー登録はメール登録とgoogle認証で行う。
-- ユーザー情報として、ユーザー名を登録する。
+- ユーザー情報として、ユーザー名、メールアドレス、パスワードを入力させる。
 
 ### 店舗登録
-![](../image/admin-login-form.svg)
-![](../image/admin-registration.svg)
+![](../image/pc-admin-register-form.svg)
+![](../image/sp-admin-register-form.svg)
 - 店舗登録は管理者用ページを公開してアクセスできるようにする。
 - emailとパスワードを使ってログインできるようにする。
 - 店舗情報として電話番号、住所、位置情報を必須項目に設定する。
@@ -155,8 +155,8 @@
 - 位置情報登録はmapbox GL JSを使ってピン差し登録。
 
 ### 店舗管理者画面
-![](../image/管理者-top.svg)
-![](../image/update-restaurant.svg)
+![](../image/sp-admin-top.svg)
+![](../image/pc-admin-top.svg)
 - いいね数、コメント数の表示
 - 投稿した内容の確認
 - 最新順でコメントを表示
@@ -170,4 +170,4 @@
 
 ### 非機能要件
 - ユーザーページはスマホファーストでpcにも対応
-- 管理者ページはpc,タブレット想定。
+- セキュリティ対策

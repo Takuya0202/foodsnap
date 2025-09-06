@@ -34,6 +34,8 @@ https://miro.com/welcomeonboard/clhJVG9xYWtQVmdZc0dnaGwzODQxeTYyeXZKdGJHYjlnWkZ0
 ## ユーザーフロー図
 
 ## ER図
+draw.io
+https://drive.google.com/file/d/1qV1Dv1KH6ZRUzyeQ4BoQLkxpWG9-iuh7/view?usp=drive_link
 
 ## API仕様書
 
