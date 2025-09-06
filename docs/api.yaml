@@ -1,0 +1,69 @@
+openapi: 3.0.0
+info:
+  title: foodsnap
+  description: "料理メニューを中心にアプローチし、料理の魅力を直感的に伝えるアプリ"
+  version: 1.0.0
+tags:
+  - name: "users"
+    description: "ユーザーに関わるAPI"
+
+servers:
+  - url: http://localhost:8787/api
+    description: "ローカル用"
+  
+paths:
+  /users/register:
+    post:
+      summary: "user登録"
+      description: "supabaseを用いたuser登録。mail認証"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+                - email
+                - password
+              properties:
+                name:
+                  type: string
+                  description: "ユーザ名"
+                  example: "田中 太郎"
+                  minLength: 1
+                  maxLength: 12
+                email:
+                  type: string
+                  description: "メールアドレス"
+                  example: "example@example.com"
+                  format: email
+                  minLength: 1                
+                password:
+                  type: string
+                  description: "パスワード"
+                  example: "Password"
+                  minLength: 8
+                  maxLength: 20
+                  format: password
+      responses:
+        200:
+          description: "user登録成功時"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    description: "success"
+        400:
+          description: "validation error"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  
+            
+
