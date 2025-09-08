@@ -54,10 +54,6 @@ paths:
               schema:
                 type: object
                 properties:
-                  message:
-                    type: string
-                    description: "登録成功メッセージ。この後メールを飛ばしてセッションを確立させる。"
-                    example: "ユーザー登録が完了しました"
                   email:
                     type: string
                     description: "登録されたメールアドレス"
@@ -79,50 +75,28 @@ paths:
                     description: "各フィールドのエラー詳細"
                     properties:
                       name:
-                        type: array
+                        type: string
                         description: "ユーザー名のバリデーションエラー"
-                        items:
-                          type: string
-                        example:
-                          [
-                            "ユーザー名は必須です",
-                            "ユーザー名は12文字以下で入力してください",
-                          ]
+                        example: "ユーザー名は必須です。"
+                        # enumは候補を表す。
+                        enum:
+                          - "ユーザー名は必須です。"
+                          - "ユーザー名は12文字以下で入力してください。"
                       email:
-                        type: array
+                        type: string
                         description: "メールアドレスのバリデーションエラー"
-                        items:
-                          type: string
-                        example:
-                          [
-                            "メールアドレスは必須です",
-                            "正しいメールアドレス形式で入力してください",
-                          ]
+                        example: "メールアドレスは必須です。"
+                        enum:
+                          - "メールアドレスは必須です。"
+                          - "正しいメールアドレス形式で入力してください。"
+                          - "このメールアドレスは既に登録されています。" # メアド重複も400 bad requestに含める。
                       password:
-                        type: array
+                        type: string
                         description: "パスワードのバリデーションエラー"
-                        items:
-                          type: string
-                        example:
-                          [
-                            "パスワードは必須です",
-                            "パスワードは8文字以上20文字以下で入力してください",
-                          ]
-        409:
-          description: "メールアドレス重複エラー"
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                    description: "重複エラーメッセージ"
-                    example: "このメールアドレスは既に登録されています"
-                  email:
-                    type: string
-                    description: "重複したメールアドレス"
-                    example: "example@example.com"
+                        example: "パスワードは必須です。"
+                        enum:
+                          - "パスワードは必須です。"
+                          - "パスワードは8文字以上20文字以下で入力してください。"
         500:
           description: "サーバーエラー"
           content:
@@ -133,4 +107,5 @@ paths:
                   message:
                     type: string
                     description: "サーバーエラーメッセージ"
-                    example: "サーバー内部エラーが発生しました"
+                    example: "サーバーエラーが発生しました"
+

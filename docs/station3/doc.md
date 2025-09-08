@@ -39,4 +39,112 @@ https://drive.google.com/file/d/1qV1Dv1KH6ZRUzyeQ4BoQLkxpWG9-iuh7/view?usp=drive
 ## API仕様書
 `api.yaml`を参照
 
+## ユーザー認証、apiに関するアーキテクチャ
+### 1. ユーザー登録フロー
+```mermaid
+sequenceDiagram
+  participant U as User
+  participant F as Frontend(Next.js)
+  participant B as Backend(Hono)
+  participant S as Supabase
+  participant E as Email
+
+  U->>F: 登録フォーム送信
+  F->>F: バリデーション
+  F->>B: POST /users/register
+  Note over F,B: {name, email, password}を入力
+  
+  B->>B: 入力値検証
+  B->>S: auth.signUp({email, password, metadata: {name}})
+
+  S->>E: 確認メール送信
+  S->>B: {user: null, session: null}
+  B->>F: 200 OK {message: "確認メールを送信しました"}
+  F->>U: 確認メール送信完了メッセージ表示
+
+  Note over U,E: ユーザーがメールを確認
+  U->>E: 確認リンクをクリック
+  E->>F: auth/callback?token=xxx にリダイレクト
+  
+  F->>S: auth.exchangeCodeForSession(code)
+  S->>F: {user, session, access_token, refresh_token}
+  F->>F: セッション情報をローカルストレージに保存
+  F->>U: 登録完了画面表示
+```
+
+### 2. ログインフロー
+```mermaid
+sequenceDiagram
+  participant U as User
+  participant F as Frontend(Next.js)
+  participant B as Backend(Hono)
+  participant S as Supabase
+
+  U->>F: ログインフォーム送信
+  F->>F: バリデーション
+  F->>S: auth.signInWithPassword({email, password})
+  
+  alt ログイン成功
+    S->>F: {user, session, access_token, refresh_token}
+    F->>F: セッション情報をローカルストレージに保存
+    F->>U: ダッシュボードにリダイレクト
+  else ログイン失敗
+    S->>F: エラー情報
+    F->>U: エラーメッセージ表示
+  end
+```
+
+### 3. API認証フロー
+```mermaid
+sequenceDiagram
+  participant F as Frontend(Next.js)
+  participant B as Backend(Hono)
+  participant S as Supabase
+
+  F->>F: セッションからaccess_tokenを取得
+  F->>B: API Request + Authorization: Bearer {token}
+  
+  B->>B: ミドルウェア: トークン抽出
+  B->>S: auth.getUser(token)
+  
+  alt トークン有効
+    S->>B: {user: {...}, error: null}
+    B->>B: ユーザー情報をコンテキストに保存
+    B->>B: ビジネスロジック実行
+    B->>F: 200 OK + レスポンスデータ
+  else トークン無効/期限切れ
+    S->>B: {user: null, error: "Invalid token"}
+    B->>F: 401 Unauthorized {error: "認証が必要です"}
+    F->>F: ログイン画面にリダイレクト
+  end
+```
+
+### 4. トークンリフレッシュフロー
+```mermaid
+sequenceDiagram
+  participant F as Frontend(Next.js)
+  participant B as Backend(Hono)
+  participant S as Supabase
+
+  F->>B: API Request + Authorization: Bearer {expired_token}
+  B->>S: auth.getUser(expired_token)
+  S->>B: {user: null, error: "Token expired"}
+  B->>F: 401 Unauthorized
+  
+  F->>F: トークンリフレッシュ処理
+  F->>S: auth.refreshSession({refresh_token})
+  
+  alt リフレッシュ成功
+    S->>F: {session: {access_token, refresh_token}}
+    F->>F: 新しいトークンを保存
+    F->>B: 元のリクエストを再実行 + 新しいトークン
+    B->>S: auth.getUser(new_token)
+    S->>B: {user: {...}, error: null}
+    B->>F: 200 OK + レスポンスデータ
+  else リフレッシュ失敗
+    S->>F: エラー
+    F->>F: ログイン画面にリダイレクト
+  end
+```
+
 ## テーブル定義図
