@@ -15,7 +15,7 @@ paths:
   /users/register:
     post:
       summary: "user登録"
-      description: "supabaseを用いたuser登録。mail認証"
+      description: "メールアドレスでのユーザー登録"
       requestBody:
         required: true
         content:
@@ -108,4 +108,44 @@ paths:
                     type: string
                     description: "サーバーエラーメッセージ"
                     example: "サーバーエラーが発生しました"
+  /auth/google:
+    get:
+      summary: "Googleでログインまたは登録を押した時のapi"
+      description: "GoogleプロバイダーでのOAuth認証を開始し、Google認証画面にリダイレクトします"
+      responses:
+        #ステータスコード302はリダイレクトを意味する。
+        302:
+          description: "Google認証画面へのリダイレクト"
+          headers:
+            Location:
+              description: "Google OAuth認証URL"
+              schema:
+                type: string
+                example: "https://accounts.google.com/oauth/authorize?client_id=..."
+                format: url;
+                description: "Google OAuth認証のURL"
+        400:
+          description: "リクエストエラー"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    description: "エラーメッセージ"
+                    example: "OAuth認証に失敗しました。"
+        500:
+          description: "サーバーエラー"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    description: "サーバーエラーメッセージ"
+                    example: "サーバーエラーが発生しました"
+
+
 
