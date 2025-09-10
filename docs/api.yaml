@@ -6,6 +6,8 @@ info:
 tags:
   - name: "users"
     description: "ユーザーに関わるAPI"
+  - name: "stores"
+    description: "店舗に関わるAPI"
 
 servers:
   - url: http://localhost:8787/api
@@ -19,35 +21,7 @@ paths:
       tags:
         - users
       requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              required:
-                - name
-                - email
-                - password
-              properties:
-                name:
-                  type: string
-                  description: "ユーザ名"
-                  example: "田中 太郎"
-                  minLength: 1
-                  maxLength: 12
-                email:
-                  type: string
-                  description: "メールアドレス"
-                  example: "example@example.com"
-                  format: email
-                  minLength: 1
-                password:
-                  type: string
-                  description: "パスワード"
-                  example: "Password"
-                  minLength: 8
-                  maxLength: 20
-                  format: password
+        $ref: "#/components/requestBodies/registerValidation"
       responses:
         201:
           description: "user登録成功時"
@@ -66,39 +40,7 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                    description: "エラーメッセージ"
-                    example: "バリデーションエラーが発生しました"
-                  errors:
-                    type: object
-                    description: "各フィールドのエラー詳細"
-                    properties:
-                      name:
-                        type: string
-                        description: "ユーザー名のバリデーションエラー"
-                        example: "ユーザー名は必須です。"
-                        # enumは候補を表す。
-                        enum:
-                          - "ユーザー名は必須です。"
-                          - "ユーザー名は12文字以下で入力してください。"
-                      email:
-                        type: string
-                        description: "メールアドレスのバリデーションエラー"
-                        example: "メールアドレスは必須です。"
-                        enum:
-                          - "メールアドレスは必須です。"
-                          - "正しいメールアドレス形式で入力してください。"
-                          - "このメールアドレスは既に登録されています。" # メアド重複も400 bad requestに含める。
-                      password:
-                        type: string
-                        description: "パスワードのバリデーションエラー"
-                        example: "パスワードは必須です。"
-                        enum:
-                          - "パスワードは必須です。"
-                          - "パスワードは8文字以上20文字以下で入力してください。"
+                $ref: "#/components/schemas/registerValidationErrors"
         500:
           $ref: "#/components/responses/serverError"
 
@@ -169,6 +111,7 @@ paths:
                     example: "accessTokenが無効、存在しません"
         500:
           $ref: "#/components/responses/serverError"
+
   /user/login:
     post:
       summary: "ユーザーログイン(email & password)"
@@ -176,39 +119,494 @@ paths:
       tags:
         - users
       requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              required:
-                - email
-                - password
-              properties:
-                email:
-                  type: string
-                  description: "メールアドレス"
-                  example: "example@example.com"
-                  format: email
-                  minLength: 1
-                password:
-                  type: string
-                  description: "パスワード"
-                  example: "Password"
-                  minLength: 8
-                  maxLength: 20
-                  format: password
+        $ref: "#/components/requestBodies/loginValidation"
+      responses:
+        200:
+          description: "ログイン成功時"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        400:
+          description: "バリデーションエラー"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/loginValidationErrors"
+        500:
+          $ref: "#/components/responses/serverError"
+  
+  /user/check:
+    get:
+      summary: "ユーザー情報の確認(middleware)"
+      description: "Cookieのtokenを使ってログインしているユーザーの情報を確認する。フロントのページ表示で使う。"
+      tags:
+        - users
+      security:
+        - cookieAuth: []
+      responses:
+        200:
+          description: "ユーザー情報を返す"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  role:
+                    type: string
+                    description: "ユーザーの権限"
+                    example: "user"
+                    enum:
+                      - "admin"
+                      - "user"
+        401:
+          $ref: "#/components/responses/authError"
+        500:
+          $ref: "#/components/responses/serverError"
+  
+  /user/logout:
+    post:
+      summary: "ユーザーログアウト"
+      description: "ユーザーをログアウト状態にする。cookieを削除"
+      tags:
+        - users
+      security:
+        - cookieAuth: []
       responses:
         200:
           $ref: "#/components/responses/success"
+        401:
+          $ref: "#/components/responses/authError"
+        500:
+          $ref: "#/components/responses/serverError"
+  
+  /user/{userId}/edit:
+    put:
+      summary: "ユーザー情報の編集"
+      description: "ユーザー情報の編集。name , iconを編集"
+      tags:
+        - users
+      security:
+        - cookieAuth: []
+      parameters:
+        - $ref: "#/components/parameters/userId"
+      requestBody:
+        $ref: "#/components/requestBodies/editValidation"
+      responses:
+        200:
+          description: "ユーザー情報の編集成功"
+          content:
+            application/json:
+              schema:
+                properties:
+                  message:
+                    type: string
+                    description: "ユーザー情報の編集成功"
+                    example: "ユーザー情報を更新しました。"
         400:
-          
-      
+          description: "バリデーションエラー"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/editValidationErrors"
+        401:
+          $ref: "#/components/responses/authError"
+        500:
+          $ref: "#/components/responses/serverError"
+
+  /user/{userId}/delete:
+    delete:
+      summary: "ユーザーの削除"
+      description: "ユーザーを削除する。"
+      tags:
+        - users
+      security:
+        - cookieAuth: []
+      parameters:
+        - $ref: "#/components/parameters/userId"
+      responses:
+        200:
+          $ref: "#/components/responses/success"
+        401:
+          $ref: "#/components/responses/authError"
+        500:
+          $ref: "#/components/responses/serverError"
+
+  /stores/top:
+    get:
+      summary: "店舗のトップページ"
+      description: "店舗のトップページを表示する。"
+      tags:
+        - stores
+      requestBody:
+        $ref: "#/components/requestBodies/UserLocation"
+      responses:
+        200:
+          description: "半径3km以内の店舗情報を優先的に取得"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Store"
+        500:
+          $ref: "#/components/responses/serverError"
+
 
 
 
 # コンポーネント
 components:
+  #パラメーター
+  parameters:
+    userId:
+      name: userId
+      in: path
+      required: true   # このエラーはエディター側のエラー。影響はないはず。
+      description: "ユーザーID"
+      schema:
+        type: string
+        example: "123e4567-e89b-12d3-a456-426614174000"
+        format: uuid
+
+  #リクエストボディ
+  requestBodies:
+    registerValidation:
+      description: "メールアドレス&パスワードでのユーザー登録"
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/registerValidation"
+
+    loginValidation:
+      description: "メールアドレス&パスワードでのユーザーログイン"
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/loginValidation"
+    
+    editValidation:
+      description: "ユーザー情報の編集"
+      required: true
+      content:
+        multipart/form-data:
+          schema:
+            $ref: "#/components/schemas/editValidation"
+
+    UserLocation:
+      description: "ユーザーの位置情報。WEB APIから取得した緯度経度を受け取る"
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/UserLocation"
+
+
+  #schemas
+  schemas:
+    registerValidation:
+      type: object
+      required:
+        - name
+        - email
+        - password
+      properties:
+        name:
+          type: string
+          description: "ユーザ名"
+          example: "田中 太郎"
+          minLength: 1
+          maxLength: 12
+        email:
+          type: string
+          description: "メールアドレス"
+          example: "example@example.com"
+          format: email
+          minLength: 1
+        password:
+          type: string
+          description: "パスワード"
+          example: "Password"
+          minLength: 8
+          maxLength: 20
+          format: password
+
+    loginValidation:
+      type: object
+      required:
+        - email
+        - password
+      properties:
+        email:
+          type: string
+          description: "メールアドレス"
+          example: "example@example.com"
+          format: email
+          minLength: 1
+        password:
+          type: string
+          description: "パスワード"
+          example: "Password"
+          minLength: 8
+          maxLength: 20
+          format: password
+
+    editValidation:
+      required:
+        - name
+        - icon
+      properties:
+        name:
+          type: string
+          description: "ユーザー名"
+          example: "田中 太郎"
+          minLength: 1
+          maxLength: 12
+        icon:
+          type: string
+          format: binary
+          description: "ユーザーのアイコン"
+
+
+    User:
+      description: "ログイン時にglobalで保存するユーザー情報"
+      type: object
+      properties:
+        id:
+          type: string
+          description: "ユーザーID(uuid)"
+          example: "123e4567-e89b-12d3-a456-426614174000"
+        email:
+          type: string
+          description: "メールアドレス"
+          example: "example@example.com"
+          format: email
+        name:
+          type: string
+          description: "ユーザー名"
+          example: "田中 太郎"
+          minLength: 1
+          maxLength: 12
+        icon:
+          type: string
+          description: "ユーザーのアイコン。初期アイコンはpublicから参照"
+          example: "https://example.com/icon.png"
+          default: "default-icon.png"
+        role:
+          type: string
+          description: "ユーザーの権限。admin or user 店舗管理者か一般ユーザー"
+          example: "user"
+          enum:
+            - "admin"
+            - "user"
+          default: "user"
+        likeStores:
+          type: array
+          description: "いいねした店舗"
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+                description: "店舗ID(id)"
+                example: "1"
+              name:
+                type: string
+                description: "店舗名"
+                example: "店舗名"
+              photo:
+                type: string
+                description: "店舗の写真。初期写真はpublicから参照"
+                example: "https://example.com/photo.png"
+                default: "default-photo.png"
+            example:
+              - id: "1"
+                name: "店舗名"
+                photo: "https://example.com/photo.png"
+              - id: "2"
+                name: "店舗名"
+                photo: "https://example.com/photo.png"
+
+    registerValidationErrors:
+      type: object
+      properties:
+        message:
+          type: string
+          description: "エラーメッセージ"
+          example: "バリデーションエラーが発生しました"
+        errors:
+          type: object
+          description: "各フィールドのエラー詳細"
+          properties:
+            name:
+              type: string
+              description: "ユーザー名のバリデーションエラー"
+              example: 
+              - "ユーザー名は必須です。"
+              - "ユーザー名は12文字以下で入力してください。"
+            email:
+              type: string
+              description: "メールアドレスのバリデーションエラー"
+              example: 
+              - "メールアドレスは必須です。"
+              - "正しいメールアドレス形式で入力してください。"
+              - "このメールアドレスは既に登録されています。"
+            password:
+              type: string
+              description: "パスワードのバリデーションエラー"
+              example: 
+              - "パスワードは必須です。"
+              - "パスワードは8文字以上20文字以下で入力してください。"
+
+    loginValidationErrors:
+      description: "ログイン時のバリデーションエラー"
+      type: object
+      properties:
+        email:
+          type: string
+          description: "メールアドレスのバリデーションエラー"
+          example: 
+          - "メールアドレスは必須です。"
+          - "正しいメールアドレス形式で入力してください。"
+        password:
+          type: string
+          description: "パスワードのバリデーションエラー"
+          example: 
+          - "パスワードは必須です。"
+          - "パスワードは8文字以上20文字以下で入力してください。"
+        message:
+          type: string
+          description: "ユーザー情報が見つからなかった場合"
+          example: "メールアドレスまたはパスワードが間違っています。"
+
+    editValidationErrors:
+      type: object
+      properties:
+        message:
+          type: string
+          description: "バリデーションエラー"
+          example: "バリデーションエラーが発生しました"
+        errors:
+          type: object
+          description: "各フィールドのエラー詳細"
+          properties:
+            name: 
+              type: string
+              description: "ユーザー名のバリデーションエラー"
+              example: 
+              - "ユーザー名は必須です。"
+              - "ユーザー名は12文字以下で入力してください。"
+            icon:
+              type: string
+              description: "ユーザーのアイコンのバリデーションエラー"
+              example: "この画像は保存できません"
+
+    UserLocation:
+      type: object
+      properties:
+        latitude:
+          type: number
+          description: "緯度"
+          example: 35.6895
+        longitude:
+          type: number
+          description: "経度"
+          example: 139.6917
+    
+    Store :
+      type: array
+      description: "店舗の情報を取得。半径3km以内を優先的に取得"
+      items:
+        type: object
+        properties:
+          id:
+            type: string
+            description: "店舗ID"
+            example: "1"
+          name:
+            type: string
+            description: "店舗名"
+            example: "店舗名"
+          address:
+            type: string
+            description: "店舗の住所"
+            example: "東京都千代田区永田町1-7-1"
+          genre:
+            type: string
+            description: "店舗のジャンル"
+            example: "寿司"
+          likeCount:
+            type: number
+            description: "店舗のいいね数"
+            example: 10
+          commentCount:
+            type: number
+            description: "店舗のコメント数"
+            example: 10
+          posts:
+            type: array
+            description: "店舗の投稿。各4件まで表示"
+            items:
+              type: object
+              properties:
+                id:
+                  type: string
+                  description: "投稿ID"
+                  example: "1"
+                title:
+                  type: string
+                  description: "投稿タイトル"
+                  example: "ウニ丼"
+                price:
+                  type: number
+                  description: "投稿の価格"
+                  example: 1000
+                photo:
+                  type: string
+                  description: "投稿の写真。"
+                  example: "https://example.com/photo.png"
+                  format: url
+      example:
+        - id: "1"
+          name: "店舗名"
+          address: "東京都千代田区永田町1-7-1"
+          genre: "寿司"
+          likeCount: 10
+          commentCount: 10
+          posts:
+            - id: "1"
+              title: "ウニ丼"
+              price: 1000
+              photo: "https://example.com/photo.png"
+              likeCount: 10
+              commentCount: 10
+            - id: "2"
+              title: "ウニ丼"
+              price: 1000
+              photo: "https://example.com/photo.png"
+              likeCount: 10
+              commentCount: 10
+            - id: "3"
+              title: "ウニ丼"
+              price: 1000
+              photo: "https://example.com/photo.png"
+              likeCount: 10
+              commentCount: 10
+            - id: "4"
+              title: "ウニ丼"
+              price: 1000
+              photo: "https://example.com/photo.png"
+              likeCount: 10
+              commentCount: 10
+
+  # セキュリティ
+  securitySchemes:
+    cookieAuth:
+      type: apiKey
+      name: accessToken
+      in: cookie
+
+  #汎用的なレスポンス
   responses:
     success:
       description: "成功時"
