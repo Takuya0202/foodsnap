@@ -14,8 +14,10 @@ servers:
 paths:
   /users/register:
     post:
-      summary: "user登録"
+      summary: "user登録(eamil & password)"
       description: "メールアドレスでのユーザー登録"
+      tags:
+        - users
       requestBody:
         required: true
         content:
@@ -47,7 +49,7 @@ paths:
                   maxLength: 20
                   format: password
       responses:
-        200:
+        201:
           description: "user登録成功時"
           content:
             application/json:
@@ -98,20 +100,14 @@ paths:
                           - "パスワードは必須です。"
                           - "パスワードは8文字以上20文字以下で入力してください。"
         500:
-          description: "サーバーエラー"
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                    description: "サーバーエラーメッセージ"
-                    example: "サーバーエラーが発生しました"
+          $ref: "#/components/responses/serverError"
+
   /auth/google:
     get:
-      summary: "Googleでログインまたは登録を押した時のapi"
+      summary: "user登録&ログイン(Google認証)"
       description: "GoogleプロバイダーでのOAuth認証を開始し、Google認証画面にリダイレクトします"
+      tags:
+        - users
       responses:
         #ステータスコード302はリダイレクトを意味する。
         302:
@@ -131,21 +127,119 @@ paths:
               schema:
                 type: object
                 properties:
-                  error:
+                  message:
                     type: string
                     description: "エラーメッセージ"
                     example: "OAuth認証に失敗しました。"
         500:
-          description: "サーバーエラー"
+          $ref: "#/components/responses/serverError"
+  
+  /auth/callback:
+    post:
+      summary: "ユーザー登録でcallbackされるAPI"
+      description: "accessTokenを受け取って、ユーザー登録を確立させる"
+      tags:
+        - users
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - accessToken
+              properties:
+                accessToken:
+                  type: string
+                  description: "URLから取得したtoken"
+                  example: "cijij13213ubuihrqrhiu12moovwifof"
+      responses:
+        200:
+          $ref: "#/components/responses/success"
+        400:
+          description: "トークンエラー"
           content:
             application/json:
               schema:
                 type: object
                 properties:
-                  error:
+                  message:
                     type: string
-                    description: "サーバーエラーメッセージ"
-                    example: "サーバーエラーが発生しました"
+                    description: "トークンエラー"
+                    example: "accessTokenが無効、存在しません"
+        500:
+          $ref: "#/components/responses/serverError"
+  /user/login:
+    post:
+      summary: "ユーザーログイン(email & password)"
+      description: "email & passwordを受け取って、ユーザーをログイン状態にする"
+      tags:
+        - users
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+                - password
+              properties:
+                email:
+                  type: string
+                  description: "メールアドレス"
+                  example: "example@example.com"
+                  format: email
+                  minLength: 1
+                password:
+                  type: string
+                  description: "パスワード"
+                  example: "Password"
+                  minLength: 8
+                  maxLength: 20
+                  format: password
+      responses:
+        200:
+          $ref: "#/components/responses/success"
+        400:
+          
+      
 
 
 
+# コンポーネント
+components:
+  responses:
+    success:
+      description: "成功時"
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+                description: "success"
+                example: "success"
+    serverError:
+      description: "サーバーエラー"
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+                description: "サーバーエラーメッセージ"
+                example: "サーバーエラーが発生しました"
+    authError:
+      description: "認証エラー"
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+                description: "認証エラーメッセージ"
+                example: "認証エラーが発生しました"
