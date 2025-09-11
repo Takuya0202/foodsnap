@@ -1,4 +1,4 @@
-openapi: 3.0.0
+openapi: 3.1.0
 info:
   title: foodsnap
   description: "料理メニューを中心にアプローチし、料理の魅力を直感的に伝えるアプリ"
@@ -40,7 +40,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/registerValidationErrors"
+                $ref: "#/components/schemas/RegisterUserValidationError"
         500:
           $ref: "#/components/responses/serverError"
 
@@ -60,7 +60,7 @@ paths:
               schema:
                 type: string
                 example: "https://accounts.google.com/oauth/authorize?client_id=..."
-                format: url;
+                format: url
                 description: "Google OAuth認証のURL"
         400:
           description: "リクエストエラー"
@@ -126,13 +126,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/User"
+                $ref: "#/components/schemas/ResponseUserSchema"
         400:
           description: "バリデーションエラー"
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/loginValidationErrors"
+                $ref: "#/components/schemas/LoginUserValidationError"
         500:
           $ref: "#/components/responses/serverError"
   
@@ -208,7 +208,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/editValidationErrors"
+                $ref: "#/components/schemas/EditUserValidationError"
         401:
           $ref: "#/components/responses/authError"
         500:
@@ -238,8 +238,8 @@ paths:
       description: "店舗のトップページを表示する。"
       tags:
         - stores
-      requestBody:
-        $ref: "#/components/requestBodies/UserLocation"
+      # requestBody:
+      #   $ref: "#/components/requestBodies/UserLocation"
       responses:
         200:
           description: "半径3km以内の店舗情報を優先的に取得"
@@ -249,6 +249,52 @@ paths:
                 $ref: "#/components/schemas/Store"
         500:
           $ref: "#/components/responses/serverError"
+  
+  /stores/index:
+    get:
+      summary: "店舗を一覧で取得"
+      description: "店舗を一覧で取得。モーダルで表示するため、topと情報量は変わらない"
+      tags:
+        - stores
+      parameters:
+        - $ref: "#/components/parameters/genreId"
+        - $ref: "#/components/parameters/prefectureId"
+        - $ref: "#/components/parameters/tagId"
+        - $ref: "#/components/parameters/keyword"
+        - $ref: "#/components/parameters/area"
+      responses:
+        200:
+          description: "店舗を一覧で取得"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Store" 
+        404:
+          description: "store not found"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    description: "store not found"
+                    example: "store not found"
+        500:
+          $ref: "#/components/responses/serverError"
+
+  # /stores/{storeId}:
+  #   get:
+  #     summary: "店舗の詳細情報を取得"
+  #     description: "店舗の詳細情報を取得"
+  #     tags:
+  #       - stores
+  #     parameters:
+  #       - $ref: "#/components/parameters/storeId"
+  #     responses:
+  #       200:
+  #         description: "店舗の詳細情報を取得"
+
 
 
 
@@ -260,12 +306,84 @@ components:
     userId:
       name: userId
       in: path
-      required: true   # このエラーはエディター側のエラー。影響はないはず。
+      required: true 
       description: "ユーザーID"
       schema:
         type: string
         example: "123e4567-e89b-12d3-a456-426614174000"
         format: uuid
+    
+    genreId:
+      name: genreId
+      in: query
+      required: false
+      description: "ジャンルID"
+      schema:
+        type: string
+        example: "1"
+
+    prefectureId:
+      name: prefectureId
+      in: query
+      required: false
+      description: "都道府県ID"
+      schema:
+        type: array
+        items:
+          type: string
+          example: "1"
+        example:
+          - "1"
+          - "2"
+      
+    tagId:
+      name: tagId
+      in: query
+      required: false
+      description: "タグID"
+      schema:
+        type: array
+        items:
+          type: string
+          example: "1"
+        example:
+          - "1"
+          - "2"
+
+    area:
+      name: area
+      in: query
+      required: false
+      description: "エリア"
+      schema:
+        type: array
+        items:
+          type: string
+          example:
+            - "関東"
+            - "関西"
+            - "中部"
+            - "近畿"
+            - "九州"
+            - "東北"
+            - "四国"
+          enum:
+            - "関東"
+            - "関西"
+            - "中部"
+            - "近畿"
+            - "九州"
+            - "東北"
+            - "四国"
+
+    keyword:
+      name: keyword
+      in: query
+      required: false
+      description: "キーワード"
+      schema:
+        type: string
+        example: "ウニ丼"
 
   #リクエストボディ
   requestBodies:
@@ -275,7 +393,7 @@ components:
       content:
         application/json:
           schema:
-            $ref: "#/components/schemas/registerValidation"
+            $ref: "#/components/schemas/RegisterUserSchema"
 
     loginValidation:
       description: "メールアドレス&パスワードでのユーザーログイン"
@@ -283,7 +401,7 @@ components:
       content:
         application/json:
           schema:
-            $ref: "#/components/schemas/loginValidation"
+            $ref: "#/components/schemas/LoginUserSchema"
     
     editValidation:
       description: "ユーザー情報の編集"
@@ -291,7 +409,7 @@ components:
       content:
         multipart/form-data:
           schema:
-            $ref: "#/components/schemas/editValidation"
+            $ref: "#/components/schemas/EditUserSchema"
 
     UserLocation:
       description: "ユーザーの位置情報。WEB APIから取得した緯度経度を受け取る"
@@ -304,7 +422,7 @@ components:
 
   #schemas
   schemas:
-    registerValidation:
+    RegisterUserSchema:
       type: object
       required:
         - name
@@ -331,7 +449,7 @@ components:
           maxLength: 20
           format: password
 
-    loginValidation:
+    LoginUserSchema:
       type: object
       required:
         - email
@@ -351,7 +469,8 @@ components:
           maxLength: 20
           format: password
 
-    editValidation:
+    EditUserSchema:
+      type: object
       required:
         - name
         - icon
@@ -368,7 +487,7 @@ components:
           description: "ユーザーのアイコン"
 
 
-    User:
+    ResponseUserSchema:
       description: "ログイン時にglobalで保存するユーザー情報"
       type: object
       properties:
@@ -427,7 +546,7 @@ components:
                 name: "店舗名"
                 photo: "https://example.com/photo.png"
 
-    registerValidationErrors:
+    RegisterUserValidationError:
       type: object
       properties:
         message:
@@ -458,7 +577,7 @@ components:
               - "パスワードは必須です。"
               - "パスワードは8文字以上20文字以下で入力してください。"
 
-    loginValidationErrors:
+    LoginUserValidationError:
       description: "ログイン時のバリデーションエラー"
       type: object
       properties:
@@ -479,7 +598,7 @@ components:
           description: "ユーザー情報が見つからなかった場合"
           example: "メールアドレスまたはパスワードが間違っています。"
 
-    editValidationErrors:
+    EditUserValidationError:
       type: object
       properties:
         message:
@@ -513,7 +632,7 @@ components:
           description: "経度"
           example: 139.6917
     
-    Store :
+    Store:
       type: array
       description: "店舗の情報を取得。半径3km以内を優先的に取得"
       items:
@@ -598,6 +717,8 @@ components:
               photo: "https://example.com/photo.png"
               likeCount: 10
               commentCount: 10
+
+    
 
   # セキュリティ
   securitySchemes:
