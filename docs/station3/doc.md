@@ -124,7 +124,7 @@ sequenceDiagram
   participant U as User
   participant F as Frontend(Next.js)
   participant B as Backend(Hono)
-  participant M as AuthMiddleware
+  participant M as Middleware
   participant DB as Supabase
 
   U->>F: 認証が必要なページアクセス
@@ -155,6 +155,33 @@ sequenceDiagram
   B->>B: Cookieを削除（maxAge: 0）
   B->>F: ログアウト完了
   F->>F: ログインページにリダイレクト
+```
+
+### パスワードリセットフロー
+```mermaid
+sequenceDiagram
+  participant U as User
+  participant F as Frontend(Next.js)
+  participant B as Backend(Hono)
+  participant DB as Supabase
+
+  U->>F: パスワードリセット
+  F->>F : バリデーションチェック
+  F->>B : POST /api/user/reset-password
+  Note over F,B: { email } をjsonで送信
+  B->>B : バリデーションチェック
+  B->>DB : auth.resetPasswordForEmail()を実行
+  DB->>U : パスワードリセットメールを送信
+  U->>F : メールを開く
+  Note left of F : メールurlのaccess_tokenを取得 
+  F->>F : バリデーションチェック
+  Note over F,B : { accessToken , Password } をjsonで送信
+  F->>B : POST /api/user/reset-password/callback
+  B->>B : バリデーションチェック
+  B->>DB : auth.getUser(accessToken)でユーザー情報を取得させる
+  DB->>DB :  admin.updateUserByIdでpasswordを更新
+  DB->>B : 更新完了
+  B->>F : ログインページにリダイレクトさせる
 ```
 ## このフローのメリット
 - backendに認証を任せることでフロントのsupabase依存をなくせる
