@@ -8,6 +8,8 @@ tags:
     description: "ユーザーに関わるAPI"
   - name: "stores"
     description: "店舗に関わるAPI"
+  - name: "admin"
+    description: "店舗管理者に関わるAPI"
 
 servers:
   - url: http://localhost:8787/api
@@ -402,6 +404,14 @@ paths:
         500:
           $ref: "#/components/responses/serverError"
 
+  /admin/register:
+    post:
+      summary: "店舗管理者の登録"
+      description: "店舗管理者を登録する。"
+      tags:
+        - admin
+
+
 
 
 # コンポーネント
@@ -554,6 +564,13 @@ components:
         application/json:
           schema:
             $ref: "#/components/schemas/CreateCommentSchema"
+    
+    adminRegisterValidation:
+      description: "店舗管理者の登録"
+      required: true
+      content:
+        application/json:
+          schema:
 
 
   #schemas
@@ -1055,6 +1072,10 @@ components:
             userName: "田中 太郎"
             userIcon: "https://example.com/icon.png"
             createdAt: "2021-01-01 00:00:00"
+
+    RegisterAdminSchema:
+      type: object
+      description: "店舗管理者の登録"
 
   # セキュリティ
   securitySchemes:
