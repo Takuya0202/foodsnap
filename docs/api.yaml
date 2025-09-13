@@ -137,7 +137,7 @@ paths:
         500:
           $ref: "#/components/responses/serverError"
   
-  /user/{userId}/edit:
+  /user/update:
     put:
       summary: "ユーザー情報の編集"
       description: "ユーザー情報の編集。name , iconを編集"
@@ -145,8 +145,6 @@ paths:
         - users
       security:
         - cookieAuth: []
-      parameters:
-        - $ref: "#/components/parameters/userId"
       requestBody:
         $ref: "#/components/requestBodies/editValidation"
       responses:
@@ -164,7 +162,7 @@ paths:
           $ref: "#/components/responses/serverError"
 
 
-  /user/{userId}/delete:
+  /user/delete:
     delete:
       summary: "ユーザーの削除"
       description: "ユーザーを削除する。"
@@ -172,8 +170,6 @@ paths:
         - users
       security:
         - cookieAuth: []
-      parameters:
-        - $ref: "#/components/parameters/userId"
       responses:
         200:
           $ref: "#/components/responses/success"
@@ -450,14 +446,14 @@ paths:
         500:
           $ref: "#/components/responses/serverError"
 
-  /admin/{userId}/update:
+  /admin/update:
     put:
       summary: "店舗管理者の更新"
       description: "店舗管理者の更新"
       tags:
         - admin
-      parameters:
-        - $ref: "#/components/parameters/userId"
+      security:
+        - cookieAuth: []
       requestBody:
         $ref: "#/components/requestBodies/updateAdminValidation"
       responses:
@@ -469,6 +465,22 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/UpdateAdminValidationError"
+        401:
+          $ref: "#/components/responses/authError"
+        500:
+          $ref: "#/components/responses/serverError"
+
+  /admin/delete:
+    delete:
+      summary: "店舗管理者の削除"
+      description: "店舗管理者を削除する。"
+      tags:
+        - admin
+      security:
+        - cookieAuth: []
+      responses:
+        200:
+          $ref: "#/components/responses/success"
         401:
           $ref: "#/components/responses/authError"
         500:
@@ -919,7 +931,16 @@ components:
         - $ref: "#/components/schemas/PasswordSchema"
 
     UpdateAdminSchema:
-      $ref: "#/components/schemas/BaseAdminSchema"
+      description: "店舗管理者の更新。店舗の写真を新たに追加できる。"
+      allOf:
+        - type: object
+        - $ref: "#/components/schemas/BaseAdminSchema"
+      properties:
+        photo:
+          type: string
+          description: "店舗の写真"
+          format: binary
+          example: "photo.png"
 
     LoginSchema:
       allOf:
@@ -1054,6 +1075,10 @@ components:
           type: string
           description: "店舗のジャンル"
           example: "寿司"
+        isLike:
+          type: boolean
+          description: "ユーザーが店舗をいいねしてるかどうか"
+          example: true
 
     ResponseStoreSchema:
       type: array
@@ -1101,6 +1126,7 @@ components:
           genre: "寿司"
           likeCount: 10
           commentCount: 10
+          isLike: true
           posts:
             - id: "1"
               title: "ウニ丼"
@@ -1235,6 +1261,7 @@ components:
           name: "店舗名"
           address: "東京都千代田区永田町1-7-1"
           genre: "寿司"
+          isLike: true
           phone: "03-1234-5678"
           longitude: 139.6917
           latitude: 35.6895
