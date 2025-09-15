@@ -65,7 +65,7 @@ sequenceDiagram
     Note over F,B: { accessToken } をjsonで送信
     B->>DB: auth.getUser(accessToken)でユーザー情報確認
     B->>DB: profilesテーブルにユーザー情報登録
-    B->>F: 登録完了 + setCookie(accessToken)
+    B->>F: 登録完了 + setCookie(accessToken, refreshToken)
     
   else Google OAuthでの登録
     U->>F: 「Googleで登録」ボタンクリック
@@ -79,7 +79,7 @@ sequenceDiagram
     Note over F,B: { accessToken } をjsonで送信
     B->>DB: auth.getUser(accessToken)でユーザー情報確認
     B->>DB: profilesテーブルにユーザー情報登録<br/>（Googleから取得したname）
-    B->>F: 登録完了 + setCookie(accessToken)
+    B->>F: 登録完了 + setCookie(accessToken, refreshToken)
   end
 ```
 
@@ -99,8 +99,8 @@ sequenceDiagram
     
     B->>B: バリデーションチェック
     B->>DB: auth.signInWithPassword()でログイン
-    DB->>B: { accessToken, user }
-    B->>F: ログイン成功 + setCookie(accessToken)
+    DB->>B: { accessToken, refreshToken, user }
+    B->>F: ログイン成功 + setCookie(accessToken, refreshToken)
     
   else Google OAuthでのログイン
     U->>F: 「Googleでログイン」ボタンクリック
@@ -113,7 +113,7 @@ sequenceDiagram
     F->>B: POST /api/auth/callback
     Note over F,B: { accessToken } をjsonで送信
     B->>DB: auth.getUser(accessToken)でユーザー情報確認
-    B->>F: ログイン成功 + setCookie(accessToken)
+    B->>F: ログイン成功 + setCookie(accessToken, refreshToken)
   end
 ```
 
@@ -129,17 +129,25 @@ sequenceDiagram
 
   U->>F: 認証が必要なページアクセス
   F->>B: GET /api/auth/check
-  Note over F,B: CookieからaccessToken自動送信
+  Note over F,B: CookieからaccessToken, refreshToken自動送信
   
   B->>M: リクエスト受信
-  M->>M: getCookie(accessToken)
+  M->>M: getCookie(accessToken, refreshToken)
   M->>DB: auth.getUser(accessToken)でトークン検証
   DB->>M: ユーザー情報返却
   
   alt トークン有効
     M->>B: ユーザー情報をコンテキストに追加
   else トークン無効
+    M->>DB: auth.refreshSession(refreshToken)でトークン更新
+    DB->>M: 新しいaccessToken, refreshToken返却
+    M->>M: Cookieを新しいトークンで更新
+    M->>DB: auth.getUser(newAccessToken)でユーザー情報取得
+    DB->>M: ユーザー情報返却
+    M->>B: ユーザー情報をコンテキストに追加
+  else refreshTokenも無効
     M->>F: 401 Unauthorized
+    M->>M: Cookieを削除
   end
 ```
 
@@ -186,6 +194,12 @@ sequenceDiagram
 ## このフローのメリット
 - backendに認証を任せることでフロントのsupabase依存をなくせる
 - localstorageではなく、httpOnly cookieを使うことでxss対策に繋がる
+- refreshTokenを活用することで、accessTokenの期限切れ時も自動的にセッションを継続
+
+## トークンの有効期限
+- **accessToken**: 1時間（Supabaseデフォルト）
+- **refreshToken**: 7日間（Supabaseデフォルト）
+- refreshTokenが期限切れの場合、ユーザーは再ログインが必要
 
 ## テーブル定義図
 drawio<br >
