@@ -314,8 +314,6 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ResponseStoreSchema" 
-        404:
-          $ref: "#/components/responses/notFound"
         500:
           $ref: "#/components/responses/serverError"
 
@@ -352,10 +350,10 @@ paths:
       responses:
         200:
           $ref: "#/components/responses/success"
-        400:
-          $ref: "#/components/responses/badRequest"
         401:
           $ref: "#/components/responses/authError"
+        404:
+          $ref: "#/components/responses/notFound"
         500:
           $ref: "#/components/responses/serverError"
 
@@ -374,8 +372,8 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ResponseCommentSchema"
-        400:
-          $ref: "#/components/responses/badRequest"
+        404:
+          $ref: "#/components/responses/notFound"
         500:
           $ref: "#/components/responses/serverError"
 
@@ -395,9 +393,15 @@ paths:
         200:
           $ref: "#/components/responses/success"
         400:
-          $ref: "#/components/responses/badRequest"
+          description: "バリデーションエラー"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CreateCommentValidationError"
         401:
           $ref: "#/components/responses/authError"
+        404:
+          $ref: "#/components/responses/notFound"
         500:
           $ref: "#/components/responses/serverError"
 
@@ -554,6 +558,8 @@ paths:
                 $ref: "#/components/schemas/CreateAndUpdatePostValidationError"
         401:
           $ref: "#/components/responses/authError"
+        404:
+          $ref: "#/components/responses/notFound"
         500:
           $ref: "#/components/responses/serverError"
 
@@ -799,7 +805,7 @@ components:
           example: "example@example.com"
           format: email
           minLength: 1
-          maxLength: 255
+          maxLength: 64
 
     PasswordSchema:
       type: object
@@ -1478,7 +1484,7 @@ components:
               description: "ユーザー名のバリデーションエラー"
               example: 
               - "ユーザー名は必須です。"
-              - "ユーザー名は12文字以下で入力してください。"
+              - "ユーザー名は20文字以下で入力してください。"
             email:
               type: string
               description: "メールアドレスのバリデーションエラー"
@@ -1700,6 +1706,25 @@ components:
               description: "メニューの説明のバリデーションエラー"
               example: 
               - "メニューの説明は100文字以下で入力してください。"
+
+    CreateCommentValidationError:
+      description: "コメントのバリデーションエラー"
+      allOf:
+        - $ref: "#/components/schemas/BaseValidationError"
+      type: object
+      properties:
+        errors:
+          type: object
+          description: "各フィールドのエラー詳細"
+          properties:
+            content:
+              type: string
+              description: "コメント内容のバリデーションエラー"
+              example: 
+              - "コメント内容は必須です。"
+              - "コメント内容は255文字以下で入力してください。"
+              minLength: 1
+              maxLength: 255
 
   # セキュリティ
   securitySchemes:
