@@ -65,7 +65,8 @@ sequenceDiagram
     Note over F,B: { accessToken } をjsonで送信
     B->>DB: auth.getUser(accessToken)でユーザー情報確認
     B->>DB: profilesテーブルにユーザー情報登録
-    B->>F: 登録完了 + setCookie(accessToken, refreshToken)
+    B->>B : ユーザーのroleをJWTで署名する
+    B->>F: 登録完了 + setCookie(accessToken, refreshToken, role)
     
   else Google OAuthでの登録
     U->>F: 「Googleで登録」ボタンクリック
@@ -79,7 +80,8 @@ sequenceDiagram
     Note over F,B: { accessToken } をjsonで送信
     B->>DB: auth.getUser(accessToken)でユーザー情報確認
     B->>DB: profilesテーブルにユーザー情報登録<br/>（Googleから取得したname）
-    B->>F: 登録完了 + setCookie(accessToken, refreshToken)
+    B->>B : ユーザーのroleをJWTで署名する
+    B->>F: 登録完了 + setCookie(accessToken, refreshToken, role)
   end
 ```
 
@@ -100,7 +102,8 @@ sequenceDiagram
     B->>B: バリデーションチェック
     B->>DB: auth.signInWithPassword()でログイン
     DB->>B: { accessToken, refreshToken, user }
-    B->>F: ログイン成功 + setCookie(accessToken, refreshToken)
+    B->>B : ユーザーのroleをJWTで署名する
+    B->>F: ログイン成功 + setCookie(accessToken, refreshToken, role)
     
   else Google OAuthでのログイン
     U->>F: 「Googleでログイン」ボタンクリック
@@ -113,7 +116,8 @@ sequenceDiagram
     F->>B: POST /api/auth/callback
     Note over F,B: { accessToken } をjsonで送信
     B->>DB: auth.getUser(accessToken)でユーザー情報確認
-    B->>F: ログイン成功 + setCookie(accessToken, refreshToken)
+    B->>B : ユーザーのroleをJWTで署名する
+    B->>F: ログイン成功 + setCookie(accessToken, refreshToken, role)
   end
 ```
 
@@ -128,15 +132,14 @@ sequenceDiagram
   participant DB as Supabase
 
   U->>F: 認証が必要なページアクセス
-  F->>B: GET /api/auth/check
+  F->>B: GET /api/xxxxxx
   Note over F,B: CookieからaccessToken, refreshToken自動送信
   
   B->>M: リクエスト受信
   M->>M: getCookie(accessToken, refreshToken)
   M->>DB: auth.getUser(accessToken)でトークン検証
-  DB->>M: ユーザー情報返却
-  
   alt トークン有効
+    DB->>M: ユーザー情報返却
     M->>B: ユーザー情報をコンテキストに追加
   else トークン無効
     M->>DB: auth.refreshSession(refreshToken)でトークン更新
@@ -145,9 +148,9 @@ sequenceDiagram
     M->>DB: auth.getUser(newAccessToken)でユーザー情報取得
     DB->>M: ユーザー情報返却
     M->>B: ユーザー情報をコンテキストに追加
-  else refreshTokenも無効
-    M->>F: 401 Unauthorized
-    M->>M: Cookieを削除
+    else refreshTokenも無効
+      M->>F: 401 Unauthorized
+      M->>M: Cookieを削除
   end
 ```
 
@@ -190,6 +193,30 @@ sequenceDiagram
   DB->>DB :  admin.updateUserByIdでpasswordを更新
   DB->>B : 更新完了
   B->>F : ログインページにリダイレクトさせる
+```
+
+### フロントエンドでのミドルウェア
+ユーザーまたは管理者ユーザーで分岐を考えた場合
+```mermaid
+sequenceDiagram
+  participant U as User
+  participant F as Frontend(Next.js)
+  participant M as Middleware(Next.js)
+  
+  U->>F : /user ページにアクセス
+  F->>M : リクエスト
+  M->>M : cookieからroleを取得
+  alt cookieが取得できない場合
+    M->>F : /loginにリダイレクト
+  else Cookieが取得できた場合
+    M->>M : jwtVerify(role , secret_key)で検証
+    alt 正常な場合
+      M->>M : payloadからroleを取得
+      M->>F : roleに応じたルートを案内
+    else cookieが改ざん または JWTの期限切れ
+      M->>F : /loginへリダイレクト
+    end
+  end
 ```
 ## このフローのメリット
 - backendに認証を任せることでフロントのsupabase依存をなくせる
