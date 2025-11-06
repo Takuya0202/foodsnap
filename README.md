@@ -1,6 +1,12 @@
 # foodsnap
-「foodsnap」は直接的、視覚的に料理の魅力を伝えることを目的とした
-飲食店検索サイトです
+「foodsnap」は直接的、視覚的に料理の魅力を伝えることを目的とした飲食店検索サイトです
+
+## URL
+### ユーザー画面
+<a href="https://www.foodsnap.org">こちらをクリック</a>
+
+### 店舗管理者画面
+<a href="https://www.foodsnap.org/admin/dashboard">こちらをクリック</a>
 
 ## 技術スタック
 ### フロントエンド
@@ -32,10 +38,10 @@
 </p>
 
 ## 要件定義
-<a href="docs/station2/doc2.md">こちらのファイルで確認</a>
+<a href="docs/src/要件定義.md">こちらのファイルで確認</a>
 
-## 設計
-<a href="docs/station3/doc.md">こちらのファイルで確認</a>
+## 設計(アーキテクチャ)
+<a href="docs/src/アーキテクト.md">こちらのファイルで確認</a>
 
 ## ソースコード
 <a href="https://github.com/Takuya0202/foodsnap-app">こちらで確認</a>
